@@ -3,7 +3,7 @@ from django.db import models
 import random
 
 class User(AbstractUser):
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
 
 class UserConfirmation(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='confirmation')
