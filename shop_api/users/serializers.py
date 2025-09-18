@@ -1,26 +1,43 @@
 from rest_framework import serializers
-from .models import User, UserConfirmation
 from django.contrib.auth import authenticate
+from .models import User, UserConfirmation
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        if user.birthdate:
+            token['birthdate'] = str(user.birthdate)
+        return token
 
 class RegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    phone_number = serializers.CharField(required=True)
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ['email', 'phone_number', 'password', 'first_name', 'last_name']
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data, is_active=False)
+        user = User.objects.create_user(
+            email=validated_data['email'],
+            phone_number=validated_data['phone_number'],
+            password=validated_data['password'],
+            is_active=False
+        )
         code = UserConfirmation.generate_code()
         UserConfirmation.objects.create(user=user, code=code)
-        print(f"Confirmation code for {user.username}: {code}")
+        print(f"Confirmation code for {user.email}: {code}")
         return user
 
+
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        user = authenticate(username=attrs['username'], password=attrs['password'])
+        user = authenticate(email=attrs['email'], password=attrs['password'])
         if not user:
             raise serializers.ValidationError("Неверные учетные данные")
         if not user.is_active:
@@ -28,13 +45,15 @@ class LoginSerializer(serializers.Serializer):
         attrs['user'] = user
         return attrs
 
+
+
 class ConfirmationSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    email = serializers.EmailField()
     code = serializers.CharField(max_length=6)
 
     def validate(self, attrs):
         try:
-            user = User.objects.get(username=attrs['username'])
+            user = User.objects.get(email=attrs['email'])
         except User.DoesNotExist:
             raise serializers.ValidationError("Пользователь не найден")
         if user.is_active:

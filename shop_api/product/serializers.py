@@ -1,6 +1,7 @@
 from django.db.models import Avg
 from rest_framework import serializers
 from .models import Category, Product, Review
+from common.validators import validate_user_age
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -41,6 +42,8 @@ class ProductSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        user = self.context['request'].user
+        validate_user_age(user) 
         title = attrs.get('title', '').strip()
         category = attrs.get('category')
         if category and Product.objects.filter(title__iexact=title, category=category).exists():

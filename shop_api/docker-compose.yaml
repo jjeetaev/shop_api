@@ -4,7 +4,15 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8001:8000"
+    depends_on:
+      -shop_api_data
+  shop_api_data:
+    image: "postgres:14"
+    environment:
+      POSTGRES_DB:database_shop_api
+      POSTGRES_USER:database_shop_api_user
+      POSTGRES_PASSWORD:1234
     volumes:
-      - .:/app
-    env_file:
-      - .env
+      -'shop_api_database:/var/lib/postgresql/data'
+volumes:
+  shop_api_database:
