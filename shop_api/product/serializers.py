@@ -19,7 +19,6 @@ class CategorySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Категория с таким названием уже существует.")
         return name
 
-
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
@@ -42,13 +41,15 @@ class ProductSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        user = self.context['request'].user
-        validate_user_age(user) 
+        request = self.context.get("request")
+        validate_user_age(request)  
+
         title = attrs.get('title', '').strip()
         category = attrs.get('category')
         if category and Product.objects.filter(title__iexact=title, category=category).exists():
             raise serializers.ValidationError("В этой категории уже есть продукт с таким названием.")
         return attrs
+
 
 
 class ReviewSerializer(serializers.ModelSerializer):
