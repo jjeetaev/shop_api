@@ -31,6 +31,10 @@ AUTH_USER_MODEL = 'users.User'
 
 # Application definition
 
+GOOGLE_CLIENT_ID = "тут твой Client ID"
+GOOGLE_CLIENT_SECRET = "тут твой Client Secret"
+
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
