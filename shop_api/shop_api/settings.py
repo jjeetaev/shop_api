@@ -34,6 +34,10 @@ AUTH_USER_MODEL = 'users.User'
 GOOGLE_CLIENT_ID = "тут твой Client ID"
 GOOGLE_CLIENT_SECRET = "тут твой Client Secret"
 
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_DB = 0
+REDIS_PASSWORD = None
 
 INSTALLED_APPS = [
     'django.contrib.admin',

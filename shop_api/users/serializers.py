@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import User, UserConfirmation
+from .models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from .redis_codes import generate_confirmation_code, save_confirmation_code, validate_confirmation_code
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -46,8 +47,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
             birthdate=validated_data.get('birthdate'),
             is_active=False
         )
-        code = UserConfirmation.generate_code()
-        UserConfirmation.objects.create(user=user, code=code)
+        code = generate_confirmation_code()
+        save_confirmation_code(user.email, code)
         print(f"Confirmation code for {user.email}: {code}")
         return user
 
@@ -71,15 +72,19 @@ class ConfirmationSerializer(serializers.Serializer):
     code = serializers.CharField(max_length=6)
 
     def validate(self, attrs):
+        email = attrs['email']
+        code = attrs['code']
+
         try:
-            user = User.objects.get(email=attrs['email'])
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
             raise serializers.ValidationError("Пользователь не найден")
 
         if user.is_active:
             raise serializers.ValidationError("Пользователь уже активирован")
 
-        if user.confirmation.code != attrs['code']:
+        from .redis_codes import validate_confirmation_code
+        if not validate_confirmation_code(email, code):
             raise serializers.ValidationError("Неверный код подтверждения")
 
         attrs['user'] = user
