@@ -8,6 +8,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
+        token['email'] = user.email
+        token['phone_number'] = user.phone_number
         if user.birthdate:
             token['birthdate'] = str(user.birthdate)
         return token
@@ -16,10 +18,18 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     phone_number = serializers.CharField(required=True)
+    birthdate = serializers.DateField(required=False, allow_null=True)
 
     class Meta:
         model = User
-        fields = ['email', 'phone_number', 'password', 'first_name', 'last_name']
+        fields = [
+            'email',
+            'phone_number',
+            'password',
+            'first_name',
+            'last_name',
+            'birthdate',
+        ]
 
     def validate_phone_number(self, value):
         if not value.isdigit():
@@ -33,6 +43,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             phone_number=validated_data['phone_number'],
             password=validated_data['password'],
+            birthdate=validated_data.get('birthdate'),
             is_active=False
         )
         code = UserConfirmation.generate_code()

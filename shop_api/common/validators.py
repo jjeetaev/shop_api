@@ -1,16 +1,18 @@
 from datetime import date
-from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
-def validate_user_age(request):
-    token_payload = getattr(request, "auth", None)
 
-    if not token_payload or "birthdate" not in token_payload:
-        raise serializers.ValidationError("Укажите дату рождения, чтобы создать продукт.")
+def validate_user_age(user):
+    birthdate = getattr(user, "birthdate", None)
 
-    try:
-        birthdate = date.fromisoformat(token_payload["birthdate"])
-    except Exception:
-        raise serializers.ValidationError("Некорректный формат даты рождения в токене.")
+    if not birthdate:
+        raise ValidationError("Укажите дату рождения, чтобы создать продукт.")
+
+    if isinstance(birthdate, str):
+        try:
+            birthdate = date.fromisoformat(birthdate)
+        except ValueError:
+            raise ValidationError("Некорректный формат даты рождения в токене.")
 
     today = date.today()
     age = today.year - birthdate.year - (
@@ -18,4 +20,4 @@ def validate_user_age(request):
     )
 
     if age < 18:
-        raise serializers.ValidationError("Вам должно быть 18 лет, чтобы создать продукт.")
+        raise ValidationError("Вам должно быть 18 лет, чтобы создать продукт.")
