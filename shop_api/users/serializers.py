@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate
 from .models import User, UserConfirmation
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -11,6 +12,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             token['birthdate'] = str(user.birthdate)
         return token
 
+
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     phone_number = serializers.CharField(required=True)
@@ -18,6 +20,13 @@ class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['email', 'phone_number', 'password', 'first_name', 'last_name']
+
+    def validate_phone_number(self, value):
+        if not value.isdigit():
+            raise serializers.ValidationError("Номер телефона должен содержать только цифры")
+        if len(value) < 10:
+            raise serializers.ValidationError("Номер телефона должен содержать не менее 10 цифр")
+        return value
 
     def create(self, validated_data):
         user = User.objects.create_user(
@@ -46,7 +55,6 @@ class LoginSerializer(serializers.Serializer):
         return attrs
 
 
-
 class ConfirmationSerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.CharField(max_length=6)
@@ -56,9 +64,12 @@ class ConfirmationSerializer(serializers.Serializer):
             user = User.objects.get(email=attrs['email'])
         except User.DoesNotExist:
             raise serializers.ValidationError("Пользователь не найден")
+
         if user.is_active:
             raise serializers.ValidationError("Пользователь уже активирован")
+
         if user.confirmation.code != attrs['code']:
             raise serializers.ValidationError("Неверный код подтверждения")
+
         attrs['user'] = user
         return attrs

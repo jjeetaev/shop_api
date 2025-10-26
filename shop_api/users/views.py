@@ -2,9 +2,9 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from .serializers import RegistrationSerializer, LoginSerializer, ConfirmationSerializer
-
 from .google_oauth import get_google_user_info, get_or_create_user, generate_jwt_for_user
 from rest_framework.views import APIView
+
 
 class RegistrationView(generics.CreateAPIView):
     serializer_class = RegistrationSerializer
